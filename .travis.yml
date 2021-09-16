@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t mandroide/react-test -f client/Dockerfile.dev .
+
+script:
+  - docker run mandroide/react-test npm test -- --coverage
+
+after_sucess:
+  - docker build -t mandroide/multi-client client
+  - docker build -t mandroide/multi-nginx nginx
+  - docker build -t mandroide/multi-server server
+  - docker build -t mandroide/multi-worker worker
+  # Log in to the docker CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push mandroide/multi-client
+  - docker push mandroide/multi-nginx 
+  - docker push mandroide/multi-server
+  - docker push mandroide/multi-worker
